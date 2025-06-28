@@ -34,7 +34,3 @@ foreach ($path in $registryPaths) {
 if (-not $found) {
     Write-ColoredLine "Bloxstrap is NOT found in Control Panel programs list." Green
 }
-
-Write-Host ""
-Read-Host "Press Enter to continue..."
-Clear-Host
