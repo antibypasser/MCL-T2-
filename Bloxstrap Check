@@ -37,4 +37,4 @@ if (-not $found) {
 
 Write-Host ""
 Read-Host "Press Enter to Exit"
-Clear-Host
+exit
