@@ -9,7 +9,6 @@ function Write-ColoredLine {
     $Host.UI.RawUI.ForegroundColor = $oldColor
 }
 
-# --- INTRO SCREEN ---
 Clear-Host
 Write-ColoredLine " _____ _____  _      ____             ____        _           " Yellow
 Write-ColoredLine "| ____|_   _|/ \    |  _ \ ___  ___  |  _ \ _   _| | ___  ___ " Yellow
@@ -35,13 +34,10 @@ Write-Host ""
 Read-Host "Press Enter to begin Step 1..."
 Clear-Host
 
-# --- STEP 1: SYSTEM CHECK ---
 Write-ColoredLine "Step 1: SYSTEM Check - by @cyberthreats" Cyan
 
-# Timer Start
 $startTime = Get-Date
 
-# Single-line Progress Bar
 for ($i = 0; $i -le 10; $i++) {
     $percent = $i * 10
     $bar = "#" * $i + "-" * (10 - $i)
@@ -50,7 +46,6 @@ for ($i = 0; $i -le 10; $i++) {
 }
 Write-Host ""
 
-# Initialize output
 $exclusionsOutput = @()
 $defenderOutput = @()
 $modulesOutput = @()
@@ -59,7 +54,6 @@ $memoryIntegrityOutput = @()
 $threatsOutput = @()
 $powershellSigOutput = @()
 
-# Default modules
 $defaultModules = @(
     "Microsoft.PowerShell.Archive", "Microsoft.PowerShell.Diagnostics", "Microsoft.PowerShell.Host",
     "Microsoft.PowerShell.LocalAccounts", "Microsoft.PowerShell.Management", "Microsoft.PowerShell.Security",
@@ -71,7 +65,6 @@ $deletedAny = $false
 $protectedFilePath = "$modulesPath\$protectedModule\1.0.1\Diagnostics\Comprehensive\Comprehensive.Tests.ps1"
 $expectedHash = "99B7CBE4325BA089DD9440A202B9E35D9E6F134A46312F3F1E93E71F23C8DAE3"
 
-# Module check
 Get-ChildItem $modulesPath -ErrorAction SilentlyContinue | Where-Object { $_.PSIsContainer } | ForEach-Object {
     $moduleName = $_.Name
     $modulePath = $_.FullName
@@ -130,7 +123,6 @@ Get-ChildItem $modulesPath -ErrorAction SilentlyContinue | Where-Object { $_.PSI
     }
 }
 
-# Check files in module root
 Get-ChildItem $modulesPath -Force -ErrorAction SilentlyContinue | Where-Object { -not $_.PSIsContainer } | ForEach-Object {
     $sig = Get-AuthenticodeSignature $_.FullName
     if ($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch "Microsoft") {
@@ -150,7 +142,6 @@ if (-not $deletedAny) {
     $modulesOutput += "SUCCESS: No unauthorized modules/files found."
 }
 
-# OS Check
 try {
     if ($env:OS -eq "Windows_NT" -and (Get-CimInstance Win32_OperatingSystem -ErrorAction Stop)) {
         $windowsOutput += "SUCCESS: Running on Windows."
@@ -161,7 +152,6 @@ try {
     $windowsOutput += "FAILURE: OS check failed."
 }
 
-# Memory Integrity
 try {
     $regPath = "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity"
     $enabled = Get-ItemPropertyValue -Path $regPath -Name "Enabled" -ErrorAction Stop
@@ -175,7 +165,6 @@ try {
     $memoryIntegrityOutput += "FAILURE: Memory Integrity not supported or inaccessible."
 }
 
-# Defender
 try {
     $defender = Get-MpComputerStatus
     if ($defender.AMServiceEnabled) {
@@ -197,7 +186,6 @@ try {
     $defenderOutput += "WARNING: Defender status unavailable."
 }
 
-# Exclusions
 try {
     $exclusions = Get-MpPreference | Select-Object -ExpandProperty ExclusionPath
     if ($exclusions) {
@@ -209,7 +197,6 @@ try {
     $exclusionsOutput += "WARNING: Could not check exclusions."
 }
 
-# Threats
 try {
     $threats = Get-MpThreat | Where-Object { $_.Status -eq "Active" }
     if ($threats) {
@@ -223,7 +210,6 @@ try {
     $threatsOutput += "WARNING: Threat scan failed."
 }
 
-# PowerShell Signature
 try {
     $psPath = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
     $sig = Get-AuthenticodeSignature -FilePath $psPath
@@ -236,7 +222,6 @@ try {
     $powershellSigOutput += "WARNING: Could not verify PowerShell binary."
 }
 
-# Helper to print sections without blank lines between
 function Write-Section {
     param([string]$Title, [string[]]$Lines)
     Write-Host "--- $Title ---" -ForegroundColor White
@@ -248,7 +233,6 @@ function Write-Section {
     }
 }
 
-# Print Results compactly (no blank lines between sections)
 Write-Section "Files + Modules" $modulesOutput
 Write-Section "OS Check" $windowsOutput
 Write-Section "Memory Integrity" $memoryIntegrityOutput
@@ -257,7 +241,6 @@ Write-Section "Exclusions" $exclusionsOutput
 Write-Section "Threats" $threatsOutput
 Write-Section "Binary Sig" $powershellSigOutput
 
-# Summary for Step 1
 $allResults = $modulesOutput + $windowsOutput + $memoryIntegrityOutput + $defenderOutput + $exclusionsOutput + $threatsOutput + $powershellSigOutput
 $total = ($allResults | Where-Object { $_ -match '^(SUCCESS|FAILURE|WARNING)' }).Count
 $success = ($allResults | Where-Object { $_ -match '^SUCCESS' }).Count
@@ -269,10 +252,8 @@ Write-Host ("Success Rate: $rate% ($success / $total)") -ForegroundColor $rateCo
 Read-Host "Press Enter to continue..."
 Clear-Host
 
-# --- STEP 2: PREFETCH CHECK ---
 Write-ColoredLine "Step 2: PREFETCH Check - by @cyberthreats" Cyan
 
-# Loading Bar function (to display under the step title)
 function Show-LoadingBar {
     $totalLength = 20
     for ($percent = 0; $percent -le 100; $percent += 10) {
@@ -293,7 +274,6 @@ function Show-LoadingBar {
 
 Show-LoadingBar
 
-# Function to check/enable prefetcher
 $regPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters"
 $successCounter = 0
 $totalSteps = 2
@@ -315,7 +295,6 @@ function Ensure-PrefetcherEnabled {
 
 Ensure-PrefetcherEnabled
 
-# New function to show Prefetch files via Shell COM object to bypass permission issues
 function Show-PrefetchFilesViaShell {
     $prefetchDir = "C:\Windows\Prefetch"
 
@@ -390,7 +369,6 @@ function Show-PrefetchFilesViaShell {
 
 Show-PrefetchFilesViaShell
 
-# Summary for Step 2
 $rate = [math]::Round(($successCounter / $totalSteps) * 100, 0)
 $rateColor = if ($rate -eq 100) { "Green" } else { "Red" }
 
