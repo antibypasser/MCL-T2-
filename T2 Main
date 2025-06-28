@@ -252,7 +252,7 @@ Write-Host
 }
 Show-LoadingBar
 
-Write-ColoredLine "[ INSTRUCTION ] Scroll down slowly to the very bottom" Yellow
+Write-ColoredLine "[ INSTRUCTION ] Scroll down slowly to the very bottom, then close the window" Yellow
 Write-Host ""
 
 Write-Host "Prefetcher check completed." -ForegroundColor Green
