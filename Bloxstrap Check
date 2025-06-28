@@ -1,0 +1,40 @@
+function Write-ColoredLine {
+    param (
+        [string]$Text,
+        [ConsoleColor]$Color = 'White'
+    )
+    $oldColor = $Host.UI.RawUI.ForegroundColor
+    $Host.UI.RawUI.ForegroundColor = $Color
+    Write-Host $Text
+    $Host.UI.RawUI.ForegroundColor = $oldColor
+}
+
+Clear-Host
+Write-ColoredLine "Scanning Control Panel Uninstall Entries for Bloxstrap..." Yellow
+Start-Sleep -Seconds 1
+
+$found = $false
+
+$registryPaths = @(
+    "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+    "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+    "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
+)
+
+foreach ($path in $registryPaths) {
+    Get-ChildItem $path -ErrorAction SilentlyContinue | ForEach-Object {
+        $displayName = ($_ | Get-ItemProperty -ErrorAction SilentlyContinue).DisplayName
+        if ($displayName -and $displayName -like "*Bloxstrap*") {
+            Write-ColoredLine "Found Bloxstrap in: $path\$($_.PSChildName)" Red
+            $found = $true
+        }
+    }
+}
+
+if (-not $found) {
+    Write-ColoredLine "Bloxstrap is NOT found in Control Panel programs list." Green
+}
+
+Write-Host ""
+Read-Host "Press Enter to continue..."
+Clear-Host
