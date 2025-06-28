@@ -10,14 +10,25 @@ $Host.UI.RawUI.ForegroundColor = $oldColor
 }
 # --- INTRO SCREEN ---
 Clear-Host
+Write-Host " _____ _____  _      ____             ____        _           " -ForegroundColor Yellow
+Write-Host "| ____|_   _|/ \    |  _ \ ___  ___  |  _ \ _   _| | ___  ___ " -ForegroundColor Yellow
+Write-Host "|  _|   | | / _ \   | |_) / _ \/ __| | |_) | | | | |/ _ \/ __|" -ForegroundColor Yellow
+Write-Host "| |___  | |/ ___ \  |  _ <  __/ (__  |  _ <| |_| | |  __/\__ \" -ForegroundColor Yellow
+Write-Host "|_____| |_/_/   \_\ |_| \_\___|\___| |_| \_\\__,_|_|\___||___/" -ForegroundColor Yellow
+Write-Host ""
 Write-ColoredLine "=== Recording Rule Hub ===" Yellow
 Write-ColoredLine "Complete all steps with 100% success to pass." White
 Write-Host ""
 Write-ColoredLine "1. ZIPs will download to C:\ToolsETA" Green
 Write-ColoredLine "2. They auto-extract and apply per window." Green
 Write-Host ""
-Write-ColoredLine "discord.gg/mcl | rivalsleague | eta" Magenta
-Write-ColoredLine "Justice Dept: discord.gg/etajd" Red
+Write-ColoredLine "discord.gg/mcl" Magenta
+Write-ColoredLine "discord.gg/rivalsleague" Magenta
+Write-ColoredLine "discord.gg/eta" Magenta
+Write-ColoredLine "discord.gg/etajd" Red
+Write-Host ""
+Write-ColoredLine "Made by @ravenader1" Blue
+Write-ColoredLine "Made by @cyberthreats" Blue
 Write-Host ""
 Read-Host "Press Enter to begin Step 1..."
 Clear-Host
@@ -237,6 +248,5 @@ $rate = if ($total -gt 0) { [math]::Round(($success / $total) * 100, 2) } else {
 $rateColor = if ($rate -eq 100) { "Green" } else { "Red" }
 Write-Host ""
 Write-Host ("Success Rate: $rate% ($success / $total)") -ForegroundColor $rateColor
-Write-Host ""
 Read-Host "Press Enter to continue..."
 Clear-Host 
