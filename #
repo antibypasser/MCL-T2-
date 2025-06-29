@@ -29,18 +29,33 @@ Write-ColoredLine ""
 Write-ColoredLine "=== Recording Rule Hub ===" Yellow
 Write-ColoredLine "Complete all steps with 100% success to pass." White
 Write-ColoredLine ""
-Write-ColoredLine "> ZIPs will download to C:\ToolsETA" Green
-Write-ColoredLine "> They auto-extract and apply per window." Green
-Write-ColoredLine "> Depending on your CPU, it might take longer to load things." Green
-Write-ColoredLine "> Your CPU will be listed below. Green means that it is fine, red means that it may take longer than usual." Green
+Write-ColoredLine "=== Information ===" Yellow
+Write-ColoredLine "> ZIPs will download to C:\ToolsETA" White
+Write-ColoredLine "> They auto-extract and apply per window." White
+Write-ColoredLine "> Depending on your CPU, it might take longer to load things." White
+Write-ColoredLine "> Your CPU will be listed below. Green means that it will load fast, red means that it may take longer than expected." White
+Write-Host ""
+$cpu = Get-WmiObject Win32_Processor | Select-Object -First 1
+
+if ($cpu.NumberOfCores -ge 4 -and $cpu.MaxClockSpeed -ge 2500) {
+    Write-Host "Detected CPU: $($cpu.Name)" -ForegroundColor Green
+    Write-Host "Your CPU looks good." -ForegroundColor Green
+} else {
+    Write-Host "Detected CPU: $($cpu.Name)" -ForegroundColor Red
+    Write-Host "Your CPU isn't that strong. This process may take longer for you." -ForegroundColor Yellow
+}
 Write-ColoredLine ""
-Write-ColoredLine "discord.gg/mcl" Magenta
-Write-ColoredLine "discord.gg/rivalsleague" Magenta
-Write-ColoredLine "discord.gg/eta" Magenta
+Write-ColoredLine "=== Discord Servers ===" Yellow
+Write-ColoredLine "discord.gg/mcl" White
+Write-ColoredLine "discord.gg/rivalsleague" White
+Write-ColoredLine "discord.gg/eta" White
+Write-ColoredLine ""
+Write-ColoredLine "=== Justice Department ===" Yellow
 Write-ColoredLine "discord.gg/etajd" Red
 Write-ColoredLine ""
-Write-ColoredLine "Made by @ravenader1" Blue
-Write-ColoredLine "Made by @cyberthreats" Cyan
+Write-ColoredLine "=== Credits ===" Yellow
+Write-ColoredLine "Made by @ravenader1" White
+Write-ColoredLine "Made by @cyberthreats" White
 Write-Host ""
 Wait-ForEnter
 Clear-Host
