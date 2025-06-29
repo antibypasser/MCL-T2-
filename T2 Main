@@ -47,15 +47,22 @@ Wait-ForEnter
 Clear-Host
 
 Write-ColoredLine "Step 1: SYSTEM Check - by @cyberthreats" Cyan
-$startTime = Get-Date
+Write-ColoredLine "INSTRUCTION: Reach 100% success" Yellow
+
+Write-Host ""  # Blank line above progress bar
 for ($i = 0; $i -le 10; $i++) {
     $percent = $i * 10
     $bar = "#" * $i + "-" * (10 - $i)
-    Write-Host -NoNewline "`r[ $bar ] $percent%"
+    $line = "Progress: [ $bar ] $percent%"
+    Write-Host -NoNewline "`r"
+    $oldColor = $Host.UI.RawUI.ForegroundColor
+    $Host.UI.RawUI.ForegroundColor = 'Blue'
+    Write-Host $line -NoNewline
+    $Host.UI.RawUI.ForegroundColor = $oldColor
     Start-Sleep -Milliseconds 200
 }
-Write-Host ""
-Write-ColoredLine "[ INSTRUCTION ] Reach 100% success" Yellow
+Write-Host ""  # Blank line below progress bar
+
 Write-Host ""
 
 $exclusionsOutput = @()
@@ -265,27 +272,25 @@ Wait-ForEnter
 Clear-Host
 
 Write-ColoredLine "Step 2: PREFETCH Check - by @cyberthreats" Cyan
+Write-ColoredLine "INSTRUCTION: Slowly scroll to the very bottom, then close the window" Yellow
 
 function Show-LoadingBar {
-    $totalLength = 20
-    for ($percent = 0; $percent -le 100; $percent += 10) {
-        $hashCount = [math]::Round(($percent / 100) * $totalLength)
-        $bar = ('#' * $hashCount).PadRight($totalLength, ' ')
-        $percentDisplay = "{0,3}%" -f $percent
-        $line = "$percentDisplay [$bar]"
+    Write-Host ""  # Blank line above progress bar
+    for ($i = 0; $i -le 10; $i++) {
+        $percent = $i * 10
+        $bar = "#" * $i + "-" * (10 - $i)
+        $line = "Progress: [ $bar ] $percent%"
         Write-Host -NoNewline "`r"
-        $originalColor = $Host.UI.RawUI.ForegroundColor
+        $oldColor = $Host.UI.RawUI.ForegroundColor
         $Host.UI.RawUI.ForegroundColor = 'Blue'
         Write-Host $line -NoNewline
-        $Host.UI.RawUI.ForegroundColor = $originalColor
-        Start-Sleep -Milliseconds 300
+        $Host.UI.RawUI.ForegroundColor = $oldColor
+        Start-Sleep -Milliseconds 200
     }
-    Write-Host
+    Write-Host ""  # Blank line below progress bar
+    Write-Host ""  # Extra blank line below progress bar
 }
 Show-LoadingBar
-
-Write-ColoredLine "[ INSTRUCTION ] Full screen the window and slowly scroll to the very bottom, then close the window" Yellow
-Write-Host ""
 
 Write-Host "Prefetcher check completed." -ForegroundColor Green
 
