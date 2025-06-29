@@ -33,7 +33,6 @@ Write-ColoredLine "=== Information ===" Yellow
 Write-ColoredLine "> ZIPs will download to C:\ToolsETA" White
 Write-ColoredLine "> They auto-extract and apply per window." White
 Write-ColoredLine "> Depending on your CPU, it might take longer to load things." White
-Write-ColoredLine "> Your CPU will be listed below. Green means that it will load fast, red means that it may take longer than expected." White
 Write-Host ""
 $cpu = Get-WmiObject Win32_Processor | Select-Object -First 1
 
@@ -49,9 +48,7 @@ Write-ColoredLine "=== Discord Servers ===" Yellow
 Write-ColoredLine "discord.gg/mcl" White
 Write-ColoredLine "discord.gg/rivalsleague" White
 Write-ColoredLine "discord.gg/eta" White
-Write-ColoredLine ""
-Write-ColoredLine "=== Justice Department ===" Yellow
-Write-ColoredLine "discord.gg/etajd" Red
+Write-ColoredLine "discord.gg/etajd" White
 Write-ColoredLine ""
 Write-ColoredLine "=== Credits ===" Yellow
 Write-ColoredLine "Made by @ravenader1" White
