@@ -369,45 +369,37 @@ Write-Host ""
 Write-Host ("Success Rate: $rate% ($successCounter / $totalSteps)") -ForegroundColor $rateColor
 Wait-ForEnter
 Clear-Host
+
 # ====== STEP 3: BAM ENTRIES CHECK ====== 
 $ErrorActionPreference = "SilentlyContinue"
 
-function Write-ColoredLine {
-    param (
-        [string]$Text,
-        [ConsoleColor]$Color = 'White'
-    )
-    $oldColor = $Host.UI.RawUI.ForegroundColor
-    $Host.UI.RawUI.ForegroundColor = $Color
-    Write-Host $Text
-    $Host.UI.RawUI.ForegroundColor = $oldColor
-}
+Add-Type @"
+using System;
+using System.Runtime.InteropServices;
+using System.Diagnostics;
+public class Win32 {
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
-function Wait-ForEnter {
-    Start-Sleep -Seconds 1
-    Write-Host "Press Enter to continue..." -ForegroundColor Yellow
-    while ($true) {
-        if ([System.Console]::KeyAvailable) {
-            $key = [System.Console]::ReadKey($true)
-            if ($key.Key -eq "Enter") { break }
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern bool IsWindowVisible(IntPtr hWnd);
+}
+"@
+
+function Maximize-GridView {
+    $title = "BAM key entries"
+    Start-Sleep -Milliseconds 200
+    $sw = Get-Process | Where-Object { $_.MainWindowTitle -like "$title*" }
+    foreach ($proc in $sw) {
+        if ($proc.MainWindowHandle -ne 0) {
+            [Win32]::ShowWindow($proc.MainWindowHandle, 3) | Out-Null
+            [Win32]::SetForegroundWindow($proc.MainWindowHandle) | Out-Null
         }
-        Start-Sleep -Milliseconds 100
     }
 }
-
-function Show-LoadingBar {
-    Write-Host ""
-    for ($i = 0; $i -le 10; $i++) {
-        $percent = $i * 10
-        $bar = "#" * $i + "-" * (10 - $i)
-        Write-Host ("Progress: [ $bar ] $percent%").PadRight(40) -ForegroundColor Blue
-        Start-Sleep -Milliseconds 200
-    }
-    Write-Host ""
-}
-
-# --- STEP 3: BAM ENTRIES ---
-$ErrorActionPreference = "SilentlyContinue"
 
 function Write-ColoredLine {
     param (
@@ -433,7 +425,6 @@ function Wait-ForEnter {
 }
 
 function Show-ProgressBar {
-    # Increments of 10% to 90%
     foreach ($i in 0..9) {
         $percent = $i * 10
         $bar = ("#" * $i).PadRight(10, "-")
@@ -448,7 +439,7 @@ function Show-ProgressBar {
 Clear-Host
 
 Write-ColoredLine "Step 3: BAM Entries - by @cyberthreats" Cyan
-Write-ColoredLine "INSTRUCTION: Full screen the window, slowly scroll to the very bottom, then close the window" Yellow
+Write-ColoredLine "INSTRUCTION: Slowly scroll to the very bottom, then close the window" Yellow 
 Write-Host ""
 
 Show-ProgressBar
@@ -546,9 +537,30 @@ $Bam = foreach ($Sid in $Users) {
     }
 }
 
-$Bam | Out-GridView -PassThru -Title "BAM key entries $($Bam.count)  - User TimeZone: ($UserTime) -> ActiveBias: ($UserBias) - DayLightTime: ($UserDay)"
-
 Write-Host "`rProgress: [ ########## ] 100% " -ForegroundColor Blue
+
+Start-Job {
+    Start-Sleep -Milliseconds 400
+    powershell -Command {
+        Add-Type @"
+        using System;
+        using System.Runtime.InteropServices;
+        public class Win32 {
+            [DllImport("user32.dll")]
+            public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+            [DllImport("user32.dll")]
+            public static extern bool SetForegroundWindow(IntPtr hWnd);
+        }
+"@
+        $procs = Get-Process | Where-Object { $_.MainWindowTitle -like "BAM key entries*" }
+        foreach ($p in $procs) {
+            [Win32]::ShowWindow($p.MainWindowHandle, 3) | Out-Null
+            [Win32]::SetForegroundWindow($p.MainWindowHandle) | Out-Null
+        }
+    }
+} | Out-Null
+
+$Bam | Out-GridView -PassThru -Title "BAM key entries $($Bam.count)  - User TimeZone: ($UserTime) -> ActiveBias: ($UserBias) - DayLightTime: ($UserDay)"
 
 $success = if ($Bam.Count -gt 0) { $true } else { $false }
 
@@ -618,7 +630,7 @@ if ($runningAutoruns) {
 }
 
 Write-ColoredLine "Step 4: Autorun Check - by @ravenader1" Cyan
-Write-ColoredLine 'INSTRUCTION: Wait until the bottom left text says "READY", Scroll to the bottom then close the Window' Yellow
+Write-ColoredLine 'INSTRUCTION: Wait until the bottom left text says "READY", Scroll to the bottom then close the window' Yellow
 Write-Host ""
 
 Show-LoadingBar
