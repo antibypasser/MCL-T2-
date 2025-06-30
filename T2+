@@ -432,19 +432,27 @@ function Wait-ForEnter {
     }
 }
 
+function Show-ProgressBar {
+    # Increments of 10% to 90%
+    foreach ($i in 0..9) {
+        $percent = $i * 10
+        $bar = ("#" * $i).PadRight(10, "-")
+        Write-Host "`rProgress: [ $bar ] $percent% " -ForegroundColor Blue -NoNewline
+        Start-Sleep -Milliseconds 200
+    }
+
+    # Instantly jump to 99% and hold
+    $bar = ("#" * 9).PadRight(10, "-")
+    Write-Host "`rProgress: [ $bar ] 99% " -ForegroundColor Blue -NoNewline
+}
+
 Clear-Host
 
 Write-ColoredLine "Step 3: BAM Entries - by @cyberthreats" Cyan
 Write-ColoredLine "INSTRUCTION: Full screen the window, slowly scroll to the very bottom, then close the window" Yellow
+Write-Host ""
 
-Write-Host ""
-for ($i = 0; $i -le 10; $i++) {
-    $percent = $i * 10
-    $bar = "#" * $i + "-" * (10 - $i)
-    Write-Host "`rProgress: [ $bar ] $percent% " -ForegroundColor Blue -NoNewline
-    Start-Sleep -Milliseconds 200
-}
-Write-Host ""
+Show-ProgressBar
 
 function Test-Admin {
     $currentUser = New-Object Security.Principal.WindowsPrincipal $([Security.Principal.WindowsIdentity]::GetCurrent())
@@ -539,7 +547,11 @@ $Bam = foreach ($Sid in $Users) {
     }
 }
 
+# Hold at 99% until the Out-GridView window is closed
 $Bam | Out-GridView -PassThru -Title "BAM key entries $($Bam.count)  - User TimeZone: ($UserTime) -> ActiveBias: ($UserBias) - DayLightTime: ($UserDay)"
+
+# Show final 100%
+Write-Host "`rProgress: [ ########## ] 100% " -ForegroundColor Blue
 
 $success = if ($Bam.Count -gt 0) { $true } else { $false }
 
