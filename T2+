@@ -441,7 +441,6 @@ function Show-ProgressBar {
         Start-Sleep -Milliseconds 200
     }
 
-    # Instantly jump to 99% and hold
     $bar = ("#" * 9).PadRight(10, "-")
     Write-Host "`rProgress: [ $bar ] 99% " -ForegroundColor Blue -NoNewline
 }
@@ -547,10 +546,8 @@ $Bam = foreach ($Sid in $Users) {
     }
 }
 
-# Hold at 99% until the Out-GridView window is closed
 $Bam | Out-GridView -PassThru -Title "BAM key entries $($Bam.count)  - User TimeZone: ($UserTime) -> ActiveBias: ($UserBias) - DayLightTime: ($UserDay)"
 
-# Show final 100%
 Write-Host "`rProgress: [ ########## ] 100% " -ForegroundColor Blue
 
 $success = if ($Bam.Count -gt 0) { $true } else { $false }
