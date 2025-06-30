@@ -570,3 +570,135 @@ Write-Host ("Success Rate: $rate% ($successCounter / $totalSteps)") -ForegroundC
 
 Wait-ForEnter
 Clear-Host
+
+# --- STEP 4: AUTORUN CHECK ---
+
+function Write-ColoredLine {
+    param (
+        [string]$Text,
+        [ConsoleColor]$Color = 'White'
+    )
+    $oldColor = $Host.UI.RawUI.ForegroundColor
+    $Host.UI.RawUI.ForegroundColor = $Color
+    Write-Host $Text
+    $Host.UI.RawUI.ForegroundColor = $oldColor
+}
+
+function Wait-ForEnter {
+    Start-Sleep -Seconds 1
+    Write-ColoredLine "Press Enter to continue..." Yellow
+    while ($true) {
+        if ([System.Console]::KeyAvailable) {
+            $key = [System.Console]::ReadKey($true)
+            if ($key.Key -eq "Enter") { break }
+        }
+        Start-Sleep -Milliseconds 100
+    }
+}
+
+function Show-LoadingBar {
+    for ($i = 0; $i -le 10; $i++) {
+        $percent = $i * 10
+        $bar = "#" * $i + "-" * (10 - $i)
+        Write-Host -NoNewline "`rProgress: [ $bar ] $percent% " -ForegroundColor Blue
+        Start-Sleep -Milliseconds 200
+    }
+    Write-Host ""  # Blank line after loading bar
+    Write-Host ""  # Additional blank line for spacing
+}
+
+Clear-Host
+
+$runningAutoruns = Get-Process -Name "autoruns" -ErrorAction SilentlyContinue
+if ($runningAutoruns) {
+    Write-ColoredLine "Found running Autoruns.exe process(es), terminating..." Yellow
+    $runningAutoruns | Stop-Process -Force
+    Start-Sleep -Seconds 1
+    Write-ColoredLine "All Autoruns.exe processes terminated." Green
+}
+
+Write-ColoredLine "Step 4: Autorun Check - by @ravenader1" Cyan
+Write-ColoredLine 'INSTRUCTION: Wait until the bottom left text says "READY", Scroll to the bottom then close the Window' Yellow
+Write-Host ""
+
+Show-LoadingBar
+
+$baseFolder = "C:\ToolsETA"
+$extractFolder = Join-Path $baseFolder "Autoruns"
+$zipUrl = "https://download.sysinternals.com/files/Autoruns.zip"
+$zipPath = Join-Path $baseFolder "Autoruns.zip"
+
+if (Test-Path $baseFolder) {
+    Write-ColoredLine "Found C:\ToolsETA, clearing its contents..." White
+    Get-ChildItem -Path $baseFolder -Force -Recurse | ForEach-Object {
+        try {
+            if ($_.Attributes -band [System.IO.FileAttributes]::ReadOnly) {
+                $_.Attributes = $_.Attributes -bxor [System.IO.FileAttributes]::ReadOnly
+            }
+            if ($_.Attributes -band [System.IO.FileAttributes]::Hidden) {
+                $_.Attributes = $_.Attributes -bxor [System.IO.FileAttributes]::Hidden
+            }
+            Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction Stop
+        }
+        catch {
+            Write-Warning "Failed to remove item $($_.FullName): $_"
+        }
+    }
+} else {
+    Write-ColoredLine "Creating C:\ToolsETA" White
+    New-Item -ItemType Directory -Path $baseFolder | Out-Null
+}
+
+Write-ColoredLine "Downloading Autoruns..." White
+Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath -UseBasicParsing
+
+Write-ColoredLine "Extracting to subfolder..." White
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+[System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $extractFolder)
+
+Remove-Item $zipPath -Force
+
+$actualExe = Get-ChildItem -Path $extractFolder -Filter "Autoruns.exe" -Recurse | Where-Object {
+    $_.FullName -notmatch "64|cmd"
+} | Select-Object -First 1
+
+if ($actualExe) {
+    Write-ColoredLine "Launching Autoruns.exe..." White
+    $process = Start-Process -FilePath $actualExe.FullName -PassThru
+
+    # Wait a bit for the window to open
+    Start-Sleep -Seconds 2
+
+    Add-Type @"
+using System;
+using System.Runtime.InteropServices;
+public class WinAPI {
+    [DllImport("user32.dll")]
+    public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+}
+"@
+
+    $SW_MAXIMIZE = 3
+    $hwnd = $process.MainWindowHandle
+
+    if ($hwnd -ne 0) {
+        [WinAPI]::ShowWindow($hwnd, $SW_MAXIMIZE) | Out-Null
+    }
+    else {
+        Write-ColoredLine "Could not find window handle to maximize." Yellow
+    }
+
+    Write-ColoredLine "Autoruns launched successfully!" Green
+Write-Host "" 
+
+    $process.WaitForExit()
+
+    Write-ColoredLine "Success Rate: 100% (1 / 1)" Green
+}
+else {
+    Write-ColoredLine "Autoruns.exe not found." Red
+    Write-ColoredLine "Success Rate: 0% (0 / 1)" Red
+}
+
+Wait-ForEnter
+Clear-Host
