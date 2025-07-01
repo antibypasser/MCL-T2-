@@ -27,9 +27,9 @@ Write-Host "| |___  | |/ ___ \  |  _ <  __/ (__  |  _ <| |_| | |  __/\__ \" -For
 Write-Host "|_____| |_/_/   \_\ |_| \_\___|\___| |_| \_\\__,_|_|\___||___/" -ForegroundColor Yellow
 Write-ColoredLine ""
 Write-ColoredLine "=== Recording Rule Hub ===" Yellow
-Write-ColoredLine "Complete all steps with 100% success to pass." White
-Write-ColoredLine ""
-Write-ColoredLine "> Applications will download to C:\ToolsETA" White
+Write-ColoredLine "> Complete all steps with 100% success to pass." White
+Write-ColoredLine "> If a prompt shows up, press OK to run the application." White
+Write-ColoredLine "> Applications will download to C:\ToolsETA." White
 Write-ColoredLine "> They auto-extract and apply per window." White
 Write-ColoredLine "> Windows will automatically go full screen for you." White
 Write-ColoredLine "> This PowerShell process currently has 7 steps." White
