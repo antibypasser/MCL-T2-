@@ -1062,6 +1062,8 @@ Windows Registry Editor Version 5.00
 
 Set-Content -Path $regFilePath -Value $regData -Encoding Unicode
 
+Show-LoadingBar
+
 # Import registry settings silently
 reg.exe import $regFilePath | Out-Null
 
@@ -1085,8 +1087,6 @@ if ($runningPE) {
 else {
     Write-ColoredLine "No running Process Explorer processes found." White
 }
-
-Show-LoadingBar
 
 $baseFolder = "C:\ToolsETA"
 $extractFolder = Join-Path $baseFolder "ProcessExplorer"
