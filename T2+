@@ -1002,4 +1002,4 @@ else {
 }
 
 Wait-ForEnter
-Clear-Host
+exit
