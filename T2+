@@ -892,12 +892,12 @@ function Show-LoadingBar {
 Clear-Host
 
 Write-ColoredLine "Step 6: Process Explorer - by @ravenader1" Cyan
-Write-ColoredLine 'INSTRUCTION: Hover over the "Process" Column, right click, and then click on "Select Column. Ensure these are selected. Columns must be fully visible' Yellow
-Write-ColoredLine "- Process Image: Company name, Image path, Command Line, & Virus Total." White
-Write-ColoredLine "- Process GPU: GPU Usage" White
-Write-ColoredLine "- Process Memory: Private Bytes, & Working Set Size" White
-Write-ColoredLine "- Process Performance: CPU Usage" White
-Write-ColoredLine "Slowly scroll to the very bottom, then close the window" Yellow
+Write-ColoredLine "INSTRUCTION: Hover over the `"Process`" Column, right click, and then click on `"Select Columns`"." Yellow
+Write-ColoredLine "Ensure these are selected. Columns must be fully visible. Slowly scroll to the very bottom, then close the window" Yellow
+Write-ColoredLine "> Process Image: Company name, Image path, Command Line, & Virus Total." DarkYellow
+Write-ColoredLine "> Process GPU: GPU Usage" DarkYellow
+Write-ColoredLine "> Process Memory: Private Bytes, & Working Set Size" DarkYellow
+Write-ColoredLine "> Process Performance: CPU Usage" DarkYellow
 Write-Host ""
 
 Show-LoadingBar
