@@ -74,7 +74,7 @@ Write-Host $line -NoNewline
 $Host.UI.RawUI.ForegroundColor = $oldColor
 Start-Sleep -Milliseconds 200
 }
-Write-Host "" # Blank line below progress bar
+Write-Host ""
 Write-Host ""
 $exclusionsOutput = @()
 $defenderOutput = @()
@@ -285,8 +285,8 @@ Write-Host $line -NoNewline
 $Host.UI.RawUI.ForegroundColor = $oldColor
 Start-Sleep -Milliseconds 200
 }
-Write-Host "" # Blank line below progress bar
-Write-Host "" # Extra blank line below progress bar
+Write-Host ""
+Write-Host ""
 }
 Show-LoadingBar
 Write-Host "Prefetcher check completed." -ForegroundColor Green
@@ -623,8 +623,8 @@ function Show-LoadingBar {
         Write-Host -NoNewline "`rProgress: [ $bar ] $percent% " -ForegroundColor Blue
         Start-Sleep -Milliseconds 200
     }
-    Write-Host ""  # Blank line after loading bar
-    Write-Host ""  # Additional blank line for spacing
+    Write-Host ""
+    Write-Host ""
 }
 
 Clear-Host
@@ -686,7 +686,6 @@ if ($actualExe) {
     Write-ColoredLine "Launching Autoruns.exe..." White
     $process = Start-Process -FilePath $actualExe.FullName -PassThru
 
-    # Wait a bit for the window to open
     Start-Sleep -Seconds 2
 
     Add-Type @"
@@ -896,8 +895,6 @@ Write-ColoredLine "Step 6: Process Explorer - by @ravenader1" Cyan
 Write-ColoredLine "INSTRUCTION: Slowly scroll to the very bottom, then close the window" Yellow
 Write-Host ""
 
-# --- Import Process Explorer registry configuration ---
-
 $regFilePath = "$env:TEMP\procexp_config.reg"
 
 $regData = @"
@@ -1064,10 +1061,8 @@ Set-Content -Path $regFilePath -Value $regData -Encoding Unicode
 
 Show-LoadingBar
 
-# Import registry settings silently
 reg.exe import $regFilePath | Out-Null
 
-# Kill running Process Explorer instances (if any)
 $processNames = @("procexp32", "procexp64", "procexp64a")
 $runningPE = Get-Process -ErrorAction SilentlyContinue | Where-Object { $processNames -contains $_.ProcessName.ToLower() }
 
