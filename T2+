@@ -638,7 +638,7 @@ if ($runningAutoruns) {
 }
 
 Write-ColoredLine "Step 4: Autorun Check - by @ravenader1" Cyan
-Write-ColoredLine 'INSTRUCTION: Wait until the bottom left text says "READY", Scroll to the bottom then close the window' Yellow
+Write-ColoredLine 'INSTRUCTION: Wait until the bottom left text says "READY", scroll to the bottom then close the window' Yellow
 Write-Host ""
 
 Show-LoadingBar
@@ -868,7 +868,7 @@ function Write-ColoredLine {
 
 function Wait-ForEnter {
     Start-Sleep -Seconds 1
-    Write-ColoredLine "Press Enter to continue..." Yellow
+    Write-ColoredLine "Press Enter to Exit" Yellow
     while ($true) {
         if ([System.Console]::KeyAvailable) {
             $key = [System.Console]::ReadKey($true)
@@ -892,7 +892,7 @@ function Show-LoadingBar {
 Clear-Host
 
 Write-ColoredLine "Step 6: Process Explorer - by @ravenader1" Cyan
-Write-ColoredLine 'INSTRUCTION: Hover over the "Process" Column, right click, and then click on "Select Column. Ensure these are selected. Columns must be fully visible"' Yellow
+Write-ColoredLine 'INSTRUCTION: Hover over the "Process" Column, right click, and then click on "Select Column. Ensure these are selected. Columns must be fully visible' Yellow
 Write-ColoredLine "- Process Image: Company name, Image path, Command Line, & Virus Total." White
 Write-ColoredLine "- Process GPU: GPU Usage" White
 Write-ColoredLine "- Process Memory: Private Bytes, & Working Set Size" White
