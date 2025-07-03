@@ -269,113 +269,132 @@ Wait-ForEnter
 Clear-Host
 
 # ====== STEP 2: PREFETCH CHECK ====== 
+function Write-ColoredLine {
+    param (
+        [string]$Text,
+        [ConsoleColor]$Color = 'White'
+    )
+    $oldColor = $Host.UI.RawUI.ForegroundColor
+    $Host.UI.RawUI.ForegroundColor = $Color
+    Write-Host $Text
+    $Host.UI.RawUI.ForegroundColor = $oldColor
+}
+
+# ====== STEP 2: PREFETCH CHECK ====== 
 
 Write-ColoredLine "Step 2: PREFETCH Check - by @cyberthreats" Cyan
 Write-ColoredLine "INSTRUCTION: Slowly scroll to the very bottom, then close the window" Yellow
+
+# Blue Loading Bar
 function Show-LoadingBar {
-Write-Host "" # Blank line above progress bar
-for ($i = 0; $i -le 10; $i++) {
-$percent = $i * 10
-$bar = "#" * $i + "-" * (10 - $i)
-$line = "Progress: [ $bar ] $percent%"
-Write-Host -NoNewline "`r"
-$oldColor = $Host.UI.RawUI.ForegroundColor
-$Host.UI.RawUI.ForegroundColor = 'Blue'
-Write-Host $line -NoNewline
-$Host.UI.RawUI.ForegroundColor = $oldColor
-Start-Sleep -Milliseconds 200
-}
-Write-Host ""
-Write-Host ""
+    Write-Host "" # Blank line above progress bar
+    for ($i = 0; $i -le 10; $i++) {
+        $percent = $i * 10
+        $bar = "#" * $i + "-" * (10 - $i)
+        $line = "Progress: [ $bar ] $percent%"
+        Write-Host -NoNewline "`r"
+        $oldColor = $Host.UI.RawUI.ForegroundColor
+        $Host.UI.RawUI.ForegroundColor = 'Blue'
+        Write-Host $line -NoNewline
+        $Host.UI.RawUI.ForegroundColor = $oldColor
+        Start-Sleep -Milliseconds 200
+    }
+    Write-Host ""
+    Write-Host ""
 }
 Show-LoadingBar
+
 Write-Host "Prefetcher check completed." -ForegroundColor Green
+
 $regPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters"
 $successCounter = 0
 $totalSteps = 2
+
 function Ensure-PrefetcherEnabled {
-try {
-$currentValue = Get-ItemPropertyValue -Path $regPath -Name EnablePrefetcher -ErrorAction Stop
-if ($currentValue -ne 3) {
-Set-ItemProperty -Path $regPath -Name EnablePrefetcher -Value 3 -ErrorAction Stop
-Write-Host "Prefetcher has been enabled." -ForegroundColor Green
-} else {
-Write-Host "Prefetcher is already enabled." -ForegroundColor Green
-}
-$GLOBAL:successCounter++
-} catch {
-Write-Host "Error: Unable to access or modify Prefetcher registry setting." -ForegroundColor Red
-}
+    try {
+        $currentValue = Get-ItemPropertyValue -Path $regPath -Name EnablePrefetcher -ErrorAction Stop
+        if ($currentValue -ne 3) {
+            Set-ItemProperty -Path $regPath -Name EnablePrefetcher -Value 3 -ErrorAction Stop
+            Write-Host "Prefetcher has been enabled." -ForegroundColor Green
+        } else {
+            Write-Host "Prefetcher is already enabled." -ForegroundColor Green
+        }
+        $GLOBAL:successCounter++
+    } catch {
+        Write-Host "Error: Unable to access or modify Prefetcher registry setting." -ForegroundColor Red
+    }
 }
 Ensure-PrefetcherEnabled
+
 function Show-PrefetchFilesViaShell {
-$prefetchDir = "C:\Windows\Prefetch"
-try {
-$shell = New-Object -ComObject Shell.Application
-$folder = $shell.Namespace($prefetchDir)
-if (-not $folder) {
-Write-Host "Cannot access Prefetch directory via Shell." -ForegroundColor Red
-return
-}
-$items = @()
-for ($i = 0; $i -lt $folder.Items().Count; $i++) {
-$item = $folder.Items().Item($i)
-if ($item.Name -like "*.pf") {
-$items += $item
-}
-}
-if ($items.Count -eq 0) {
-Write-Host "No prefetch files found in $prefetchDir." -ForegroundColor Red
-return
-}
-Add-Type -AssemblyName System.Windows.Forms
-Add-Type -AssemblyName System.Drawing
-$form = New-Object System.Windows.Forms.Form
-$form.Text = "Prefetch Viewer (Shell)"
-$form.WindowState = 'Maximized'
-$form.MinimumSize = New-Object System.Drawing.Size(800, 600)
-$form.StartPosition = "CenterScreen"
-$form.BackColor = [System.Drawing.Color]::White
-$form.Topmost = $true
-$form.FormBorderStyle = 'Sizable'
-$dgv = New-Object System.Windows.Forms.DataGridView
-$dgv.Dock = 'Fill'
-$dgv.ReadOnly = $true
-$dgv.BackgroundColor = [System.Drawing.Color]::White
-$dgv.DefaultCellStyle.ForeColor = [System.Drawing.Color]::Black
-$dgv.ColumnHeadersDefaultCellStyle.ForeColor = [System.Drawing.Color]::Black
-$dgv.ColumnHeadersDefaultCellStyle.BackColor = [System.Drawing.Color]::LightGray
-$dgv.EnableHeadersVisualStyles = $false
-$dgv.AutoSizeColumnsMode = 'AllCells'
-$form.Controls.Add($dgv)
-$table = New-Object System.Data.DataTable
-$table.Columns.Add("FileName", [string]) | Out-Null
-$table.Columns.Add("Size (KB)", [double]) | Out-Null
-$table.Columns.Add("LastWriteTime", [datetime]) | Out-Null
-foreach ($item in $items) {
-$filePath = Join-Path $prefetchDir $item.Name
-$fileInfo = Get-Item $filePath
-$row = $table.NewRow()
-$row["FileName"] = $item.Name
-$row["Size (KB)"] = [math]::Round($fileInfo.Length / 1KB, 2)
-$row["LastWriteTime"] = $fileInfo.LastWriteTime
-$table.Rows.Add($row)
-}
-$dgv.DataSource = $table
-$form.Add_Shown({ $form.Activate() })
-$GLOBAL:successCounter++
-[void] $form.ShowDialog()
-} catch {
-Write-Host "Failed to list Prefetch files via Shell: $_" -ForegroundColor Red
-}
+    $prefetchDir = "C:\Windows\Prefetch"
+    try {
+        $items = Get-ChildItem -Path $prefetchDir -Filter *.pf -ErrorAction Stop
+        if ($items.Count -eq 0) {
+            Write-Host "No prefetch files found in $prefetchDir." -ForegroundColor Red
+            return
+        }
+
+        Add-Type -AssemblyName System.Windows.Forms
+        Add-Type -AssemblyName System.Drawing
+        $form = New-Object System.Windows.Forms.Form
+        $form.Text = "Prefetch Viewer"
+        $form.WindowState = 'Maximized'
+        $form.MinimumSize = New-Object System.Drawing.Size(800, 600)
+        $form.StartPosition = "CenterScreen"
+        $form.BackColor = [System.Drawing.Color]::White
+        $form.Topmost = $true
+        $form.FormBorderStyle = 'Sizable'
+
+        $dgv = New-Object System.Windows.Forms.DataGridView
+        $dgv.Dock = 'Fill'
+        $dgv.ReadOnly = $true
+        $dgv.BackgroundColor = [System.Drawing.Color]::White
+        $dgv.DefaultCellStyle.ForeColor = [System.Drawing.Color]::Black
+        $dgv.ColumnHeadersDefaultCellStyle.ForeColor = [System.Drawing.Color]::Black
+        $dgv.ColumnHeadersDefaultCellStyle.BackColor = [System.Drawing.Color]::LightGray
+        $dgv.EnableHeadersVisualStyles = $false
+        $dgv.AutoSizeColumnsMode = 'AllCells'
+        $form.Controls.Add($dgv)
+
+        $table = New-Object System.Data.DataTable
+        $table.Columns.Add("FileName", [string]) | Out-Null
+        $table.Columns.Add("Size (KB)", [double]) | Out-Null
+        $table.Columns.Add("LastWriteTime", [datetime]) | Out-Null
+
+        foreach ($file in $items) {
+            $row = $table.NewRow()
+            $row["FileName"] = $file.Name
+            $row["Size (KB)"] = [math]::Round($file.Length / 1KB, 2)
+            $row["LastWriteTime"] = $file.LastWriteTime
+            $table.Rows.Add($row)
+        }
+
+        $dgv.DataSource = $table
+        $form.Add_Shown({ $form.Activate() })
+        $GLOBAL:successCounter++
+        [void]$form.ShowDialog()
+    } catch {
+        Write-Host "Failed to list Prefetch files: $_" -ForegroundColor Red
+    }
 }
 Show-PrefetchFilesViaShell
+
+# Show Success Rate
 $rate = [math]::Round(($successCounter / $totalSteps) * 100, 0)
 $rateColor = if ($rate -eq 100) { "Green" } else { "Red" }
 Write-Host ""
 Write-Host ("Success Rate: $rate% ($successCounter / $totalSteps)") -ForegroundColor $rateColor
+
+# Wait for Enter
+function Wait-ForEnter {
+ 
+    Write-ColoredLine "Press Enter to continue..." Yellow 
+    [void][System.Console]::ReadLine()
+}
 Wait-ForEnter
 Clear-Host
+
 
 # ====== STEP 3: BAM ENTRIES CHECK ======
 
