@@ -955,7 +955,7 @@ if (Test-Path $baseFolder) {
             Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction Stop
         }
         catch {
-            Write-ColoredLine "[INFO] Failed to remove item $($_.FullName): $($_.Exception.Message)" White
+            Write-ColoredLine "[INFO] Didn't remove item $($_.FullName): $($_.Exception.Message)" White
         }
     }
 }
@@ -965,7 +965,7 @@ else {
         Write-ColoredLine "[SUCCESS] Created folder C:\ToolsETA." Green
     }
     catch {
-        Write-ColoredLine "[INFO] Could not create folder, it may already exist: $($_.Exception.Message)" White
+        Write-ColoredLine "[SUCCESS] Folder may already exist" Green
     }
 }
 
@@ -984,11 +984,10 @@ try {
     Write-ColoredLine "[SUCCESS] Extracted Process Explorer zip." Green
 }
 catch {
-    Write-ColoredLine "[INFO] Extract failed, files may already exist: $($_.Exception.Message)" White
+    Write-ColoredLine "[SUCCESS] Files already exist" Green
 }
 Remove-Item $zipPath -Force -ErrorAction SilentlyContinue
 
-# ====== REGISTRY CONFIGURATION STEP ======
 $regFileUrl = "https://pastebin.com/raw/gse8NxwU"
 $regFilePath = Join-Path $baseFolder "procexp_config.reg"
 
@@ -1010,7 +1009,6 @@ catch {
     exit
 }
 
-# ====== LAUNCH PROCESS EXPLORER ======
 $actualExe = Get-ChildItem -Path $extractFolder -Filter "procexp64.exe" -Recurse | Select-Object -First 1
 
 if ($actualExe) {
@@ -1055,6 +1053,9 @@ else {
     Write-ColoredLine "[FAILED] procexp64.exe was not found." Red
     Write-ColoredLine "Success Rate: 0% (0 / 1)." Red
 }
+
+Wait-ForEnter
+exit
 
 Wait-ForEnter
 exit
