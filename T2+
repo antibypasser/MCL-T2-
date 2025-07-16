@@ -972,7 +972,6 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $extractFolder)
 Remove-Item $zipPath -Force
 
-# ====== REGISTRY CONFIGURATION STEP ======
 $regFileUrl = "https://pastebin.com/raw/gse8NxwU"
 $regFilePath = Join-Path $baseFolder "procexp_config.reg"
 
@@ -994,7 +993,6 @@ catch {
     exit
 }
 
-# ====== LAUNCH PROCESS EXPLORER ======
 $actualExe = Get-ChildItem -Path $extractFolder -Filter "procexp64.exe" -Recurse | Select-Object -First 1
 
 if ($actualExe) {
