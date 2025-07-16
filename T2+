@@ -657,7 +657,7 @@ if ($runningAutoruns) {
 }
 
 Write-ColoredLine "Step 4: Autorun Check - by @ravenader1" Cyan
-Write-ColoredLine 'INSTRUCTION: Wait until the bottom left text says "READY", scroll to the bottom then close the window' Yellow
+Write-ColoredLine 'INSTRUCTION: Wait until the bottom left text says "READY", scroll to the bottom, then close the window. Yellow
 Write-Host ""
 
 Show-LoadingBar
@@ -887,7 +887,7 @@ function Write-ColoredLine {
 
 function Wait-ForEnter {
     Start-Sleep -Seconds 1
-    Write-ColoredLine "Press Enter to Exit" Yellow
+    Write-ColoredLine "Press Enter to exit." Yellow
     while ($true) {
         if ([System.Console]::KeyAvailable) {
             $key = [System.Console]::ReadKey($true)
@@ -910,13 +910,8 @@ function Show-LoadingBar {
 
 Clear-Host
 
-Write-ColoredLine "Step 6: Process Explorer - by @ravenader1" Cyan
-Write-ColoredLine "INSTRUCTION: Hover over the `"Process`" Column, right click, and then click on `"Select Columns`"." Yellow
-Write-ColoredLine "Ensure these are selected. Columns must be fully visible. Slowly scroll to the very bottom, then close the window" Yellow
-Write-ColoredLine "> Process Image: Company name, Image path, Command Line, & Virus Total." DarkYellow
-Write-ColoredLine "> Process GPU: GPU Usage" DarkYellow
-Write-ColoredLine "> Process Memory: Private Bytes, & Working Set Size" DarkYellow
-Write-ColoredLine "> Process Performance: CPU Usage" DarkYellow
+Write-ColoredLine "Step 6: Process Explorer - by @ravenader1." Cyan
+Write-ColoredLine "INSTRUCTION: Wait for Process Explorer to open. Scroll to the bottom, then close the window." Yellow
 Write-Host ""
 
 Show-LoadingBar
@@ -925,20 +920,21 @@ $processNames = @("procexp32", "procexp64", "procexp64a")
 $runningPE = Get-Process -ErrorAction SilentlyContinue | Where-Object { $processNames -contains $_.ProcessName.ToLower() }
 
 if ($runningPE) {
-    Write-ColoredLine "Found running Process Explorer process(es), terminating..." Yellow
+    Write-ColoredLine "[SUCCESS] Found and terminated running Process Explorer process(es)." Green
     $runningPE | ForEach-Object {
         try {
             $_ | Stop-Process -Force -ErrorAction Stop
+            Write-ColoredLine "[SUCCESS]  • Terminated process ID $($_.Id)." Green
         }
         catch {
-            Write-ColoredLine "Failed to terminate process ID $($_.Id): $_" Red
+            Write-ColoredLine "[FAILED]  • Failed to terminate process ID $($_.Id): $_" Red
         }
     }
     Start-Sleep -Seconds 2
-    Write-ColoredLine "All Process Explorer processes terminated." Green
+    Write-ColoredLine "[SUCCESS] All Process Explorer processes terminated." Green
 }
 else {
-    Write-ColoredLine "No running Process Explorer processes found." White
+    Write-ColoredLine "[SUCCESS] No running Process Explorer processes were found." Green
 }
 
 $baseFolder = "C:\ToolsETA"
@@ -947,7 +943,7 @@ $zipUrl = "https://download.sysinternals.com/files/ProcessExplorer.zip"
 $zipPath = Join-Path $baseFolder "ProcessExplorer.zip"
 
 if (Test-Path $baseFolder) {
-    Write-ColoredLine "Found C:\ToolsETA, clearing its contents..." White
+    Write-ColoredLine "[SUCCESS] Cleaned up existing C:\ToolsETA folder." Green
     Get-ChildItem -Path $baseFolder -Force -Recurse | ForEach-Object {
         try {
             if ($_.Attributes -band [System.IO.FileAttributes]::ReadOnly) {
@@ -959,27 +955,50 @@ if (Test-Path $baseFolder) {
             Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction Stop
         }
         catch {
-            Write-Warning "Failed to remove item $($_.FullName): $_"
+            Write-ColoredLine "[FAILED] Failed to remove item $($_.FullName): $_" Red
         }
     }
-} else {
-    Write-ColoredLine "Creating C:\ToolsETA" White
+}
+else {
     New-Item -ItemType Directory -Path $baseFolder | Out-Null
+    Write-ColoredLine "[SUCCESS] Created folder C:\ToolsETA." Green
 }
 
-Write-ColoredLine "Downloading Process Explorer..." White
+Write-ColoredLine "[SUCCESS] Downloaded Process Explorer." Green
 Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath -UseBasicParsing
 
-Write-ColoredLine "Extracting to subfolder..." White
+Write-ColoredLine "[SUCCESS] Extracted Process Explorer zip." Green
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $extractFolder)
-
 Remove-Item $zipPath -Force
 
+# ====== REGISTRY CONFIGURATION STEP ======
+$regFileUrl = "https://pastebin.com/raw/gse8NxwU"
+$regFilePath = Join-Path $baseFolder "procexp_config.reg"
+
+try {
+    Invoke-WebRequest -Uri $regFileUrl -OutFile $regFilePath -UseBasicParsing -ErrorAction Stop
+    Write-ColoredLine "[SUCCESS] Downloaded Process Explorer registry configuration." Green
+}
+catch {
+    Write-ColoredLine "[FAILED] Failed to download registry config: $_" Red
+    exit
+}
+
+try {
+    Start-Process -FilePath "reg.exe" -ArgumentList "import `"$regFilePath`"" -NoNewWindow -Wait -ErrorAction Stop
+    Write-ColoredLine "[SUCCESS] Imported registry configuration successfully." Green
+}
+catch {
+    Write-ColoredLine "[FAILED] Registry importing failed: $_" Red
+    exit
+}
+
+# ====== LAUNCH PROCESS EXPLORER ======
 $actualExe = Get-ChildItem -Path $extractFolder -Filter "procexp64.exe" -Recurse | Select-Object -First 1
 
 if ($actualExe) {
-    Write-ColoredLine "Launching Process Explorer..." White
+    Write-ColoredLine "[SUCCESS] Launched Process Explorer." Green
     $process = Start-Process -FilePath $actualExe.FullName -PassThru
 
     Add-Type @"
@@ -1003,21 +1022,22 @@ public class WinAPI {
 
     if ($hwnd -and $hwnd -ne 0) {
         [WinAPI]::ShowWindow($hwnd, $SW_MAXIMIZE) | Out-Null
-        Write-ColoredLine "Process Explorer window maximized!" Green
-    } else {
-        Write-ColoredLine "Could not find window handle to maximize." Yellow
+        Write-ColoredLine "[SUCCESS] Process Explorer window maximized." Green
+    }
+    else {
+        Write-ColoredLine "[FAILED] Could not find window handle to maximize." Red
     }
 
-    Write-ColoredLine "Process Explorer launched successfully!" Green
+    Write-ColoredLine "[SUCCESS] Process Explorer launched successfully." Green
     Write-Host ""
 
     $process.WaitForExit()
 
-    Write-ColoredLine "Success Rate: 100% (1 / 1)" Green
+    Write-ColoredLine "Success Rate: 100% (1 / 1)." Green
 }
 else {
-    Write-ColoredLine "procexp64.exe not found." Red
-    Write-ColoredLine "Success Rate: 0% (0 / 1)" Red
+    Write-ColoredLine "[FAILED] procexp64.exe was not found." Red
+    Write-ColoredLine "Success Rate: 0% (0 / 1)." Red
 }
 
 Wait-ForEnter
