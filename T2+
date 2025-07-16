@@ -927,7 +927,7 @@ if ($runningPE) {
             Write-ColoredLine "[SUCCESS]  • Terminated process ID $($_.Id)." Green
         }
         catch {
-            Write-ColoredLine "[FAILED]  • Failed to terminate process ID $($_.Id): $_" Red
+            Write-ColoredLine "[FAILED]  • Failed to terminate process ID $($_.Id): $($_.Exception.Message)" Red
         }
     }
     Start-Sleep -Seconds 2
@@ -955,23 +955,40 @@ if (Test-Path $baseFolder) {
             Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction Stop
         }
         catch {
-            Write-ColoredLine "[FAILED] Failed to remove item $($_.FullName): $_" Red
+            Write-ColoredLine "[INFO] Failed to remove item $($_.FullName): $($_.Exception.Message)" White
         }
     }
 }
 else {
-    New-Item -ItemType Directory -Path $baseFolder | Out-Null
-    Write-ColoredLine "[SUCCESS] Created folder C:\ToolsETA." Green
+    try {
+        New-Item -ItemType Directory -Path $baseFolder -ErrorAction Stop | Out-Null
+        Write-ColoredLine "[SUCCESS] Created folder C:\ToolsETA." Green
+    }
+    catch {
+        Write-ColoredLine "[INFO] Could not create folder, it may already exist: $($_.Exception.Message)" White
+    }
 }
 
-Write-ColoredLine "[SUCCESS] Downloaded Process Explorer." Green
-Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath -UseBasicParsing
+try {
+    Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath -UseBasicParsing -ErrorAction Stop
+    Write-ColoredLine "[SUCCESS] Downloaded Process Explorer." Green
+}
+catch {
+    Write-ColoredLine "[FAILED] Failed to download Process Explorer: $($_.Exception.Message)" Red
+    exit
+}
 
-Write-ColoredLine "[SUCCESS] Extracted Process Explorer zip." Green
-Add-Type -AssemblyName System.IO.Compression.FileSystem
-[System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $extractFolder)
-Remove-Item $zipPath -Force
+try {
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $extractFolder)
+    Write-ColoredLine "[SUCCESS] Extracted Process Explorer zip." Green
+}
+catch {
+    Write-ColoredLine "[INFO] Extract failed, files may already exist: $($_.Exception.Message)" White
+}
+Remove-Item $zipPath -Force -ErrorAction SilentlyContinue
 
+# ====== REGISTRY CONFIGURATION STEP ======
 $regFileUrl = "https://pastebin.com/raw/gse8NxwU"
 $regFilePath = Join-Path $baseFolder "procexp_config.reg"
 
@@ -980,7 +997,7 @@ try {
     Write-ColoredLine "[SUCCESS] Downloaded Process Explorer registry configuration." Green
 }
 catch {
-    Write-ColoredLine "[FAILED] Failed to download registry config: $_" Red
+    Write-ColoredLine "[FAILED] Failed to download registry config: $($_.Exception.Message)" Red
     exit
 }
 
@@ -989,10 +1006,11 @@ try {
     Write-ColoredLine "[SUCCESS] Imported registry configuration successfully." Green
 }
 catch {
-    Write-ColoredLine "[FAILED] Registry importing failed: $_" Red
+    Write-ColoredLine "[FAILED] Registry importing failed: $($_.Exception.Message)" Red
     exit
 }
 
+# ====== LAUNCH PROCESS EXPLORER ======
 $actualExe = Get-ChildItem -Path $extractFolder -Filter "procexp64.exe" -Recurse | Select-Object -First 1
 
 if ($actualExe) {
