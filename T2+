@@ -32,7 +32,7 @@ Write-ColoredLine "> Applications will download to C:\ToolsETA." White
 Write-ColoredLine "> They auto-extract and apply per window." White
 Write-ColoredLine "> If a prompt shows up, press OK to run the application." White
 Write-ColoredLine "> The applications will automatically go full screen for you." White
-Write-ColoredLine "> This PowerShell process currently has 7 steps." White
+Write-ColoredLine "> This PowerShell process currently has 6 steps." White
 Write-ColoredLine "> Depending on your CPU, it might take longer to load." White
 Write-Host ""
 $cpu = Get-WmiObject Win32_Processor | Select-Object -First 1
@@ -962,29 +962,29 @@ if (Test-Path $baseFolder) {
 else {
     try {
         New-Item -ItemType Directory -Path $baseFolder -ErrorAction Stop | Out-Null
-        Write-ColoredLine "[SUCCESS] Created folder C:\ToolsETA." Green
+        Write-ColoredLine '[SUCCESS] Created folder C:\ToolsETA.' Green
     }
     catch {
-        Write-ColoredLine "[INFO] Folder may already exist" Green
+        Write-ColoredLine '[INFO] Folder may already exist' Green
     }
 }
 
 try {
     Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath -UseBasicParsing -ErrorAction Stop
-    Write-ColoredLine "[SUCCESS] Downloaded Process Explorer." Green
+    Write-ColoredLine '[SUCCESS] Downloaded Process Explorer.' Green
 }
 catch {
-    Write-ColoredLine "[FAILED] Failed to download Process Explorer: $($_.Exception.Message)" Red
+    Write-ColoredLine '[FAILED] Failed to download Process Explorer: $($_.Exception.Message)' Red
     exit
 }
 
 try {
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $extractFolder)
-    Write-ColoredLine "[SUCCESS] Extracted Process Explorer zip." Green
+    Write-ColoredLine '[SUCCESS] Extracted Process Explorer zip.' Green
 }
 catch {
-    Write-ColoredLine "[SUCCESS] Files already exist" Green
+    Write-ColoredLine '[SUCCESS] Files already exist' Green
 }
 Remove-Item $zipPath -Force -ErrorAction SilentlyContinue
 
@@ -1048,15 +1048,11 @@ public class WinAPI {
 
     $process.WaitForExit()
 
-    Write-ColoredLine "Success Rate: 100% (1 / 1)." Green
-}
+    Write-ColoredLine "[SUCCESS] Success Rate: 100% (1 / 1)." Green
 else {
     Write-ColoredLine "[FAILED] procexp64.exe was not found." Red
-    Write-ColoredLine "Success Rate: 0% (0 / 1)." Red
+    Write-ColoredLine "[SUCCESS] Success Rate: 0% (0 / 1)." Red
 }
-
-Wait-ForEnter
-exit
 
 Wait-ForEnter
 exit
