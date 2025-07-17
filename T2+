@@ -788,7 +788,7 @@ if ($runningWinObj) {
 }
 
 Write-ColoredLine "Step 5: WinObj Check - by @ravenader1" Cyan 
-Write-ColoredLine 'INSTRUCTION: Navigate to Sessions > 0 > Dos Devices > Click on every folder, then close the window' Yellow
+Write-ColoredLine "INSTRUCTION: Navigate to Sessions > 0 > Dos Devices > Click on every folder, then close the window" Yellow
 Write-Host ""
 
 Show-LoadingBar
@@ -965,7 +965,7 @@ else {
         Write-ColoredLine "[SUCCESS] Created folder C:\ToolsETA." Green
     }
     catch {
-        Write-ColoredLine "[SUCCESS] Folder may already exist" Green
+        Write-ColoredLine "[INFO] Folder may already exist" Green
     }
 }
 
