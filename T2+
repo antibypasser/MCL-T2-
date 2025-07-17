@@ -610,7 +610,7 @@ Write-Host ("Success Rate: $rate% ($successCounter / $totalSteps)") -ForegroundC
 Wait-ForEnter
 Clear-Host
 
-# ===== STEP 4: AUTORUN CHECK =====
+# ===== Utility Functions =====
 
 function Write-ColoredLine {
     param (
@@ -638,6 +638,33 @@ function Wait-ForEnter {
     }
 }
 
+function Clean-Folder {
+    param (
+        [string]$Path
+    )
+    if (Test-Path $Path) {
+        Write-ColoredLine "Clearing all contents inside $Path..." White
+        Get-ChildItem -Path $Path -Force -Recurse | ForEach-Object {
+            try {
+                $_.Attributes = 'Normal'
+                Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction Stop
+            }
+            catch {
+                Write-ColoredLine "[INFO] Skipped: $($_.FullName): $($_.Exception.Message)" White
+            }
+        }
+        Write-ColoredLine "[SUCCESS] Cleared contents of $Path." Green
+    } else {
+        try {
+            New-Item -ItemType Directory -Path $Path -ErrorAction Stop | Out-Null
+            Write-ColoredLine "[SUCCESS] Created folder $Path." Green
+        } catch {
+            Write-ColoredLine ("[FAILED] Could not create folder " + $Path + ": " + $_.Exception.Message) Red
+            exit 1
+        }
+    }
+}
+
 function Show-LoadingBar {
     for ($i = 0; $i -le 10; $i++) {
         $percent = $i * 10
@@ -648,104 +675,7 @@ function Show-LoadingBar {
     Write-Host "`n"
 }
 
-Clear-Host
-
-Write-ColoredLine "Step 4: Autorun Check - by @ravenader1" Cyan
-Write-ColoredLine "INSTRUCTION: Wait for the bottom left text to say 'Ready', scroll slowly down, then close the window when finished." Yellow
-Write-Host ""
-
-$baseFolder = "C:\ToolsETA"
-$extractFolder = Join-Path $baseFolder "Autoruns"
-$zipUrl = "https://download.sysinternals.com/files/Autoruns.zip"
-$zipPath = Join-Path $baseFolder "Autoruns.zip"
-
-# Clear all contents inside baseFolder before starting
-if (Test-Path $baseFolder) {
-    Write-ColoredLine "Clearing all contents inside $baseFolder..." White
-    Get-ChildItem -Path $baseFolder -Force -Recurse | ForEach-Object {
-        try {
-            if ($_.Attributes -band [System.IO.FileAttributes]::ReadOnly) {
-                $_.Attributes = $_.Attributes -band (-bnot [System.IO.FileAttributes]::ReadOnly)
-            }
-            if ($_.Attributes -band [System.IO.FileAttributes]::Hidden) {
-                $_.Attributes = $_.Attributes -band (-bnot [System.IO.FileAttributes]::Hidden)
-            }
-            Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction Stop
-        }
-        catch {
-            Write-ColoredLine ("[INFO] Skipped: " + $_.FullName + ": " + $_.Exception.Message) White
-        }
-    }
-    Write-ColoredLine "[SUCCESS] Cleared all contents inside $baseFolder." Green
-} else {
-    Write-ColoredLine "$baseFolder does not exist, creating it..." White
-    try {
-        New-Item -ItemType Directory -Path $baseFolder -ErrorAction Stop | Out-Null
-        Write-ColoredLine "[SUCCESS] Created folder $baseFolder." Green
-    }
-    catch {
-        Write-ColoredLine ("[FAILED] Could not create folder ${baseFolder}: " + $_.Exception.Message) Red
-        exit 1
-    }
-}
-
-# Download Autoruns.zip
-try {
-    Write-ColoredLine "[INFO] Downloading Autoruns..." White
-    Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath -UseBasicParsing -ErrorAction Stop
-    Write-ColoredLine "[SUCCESS] Download completed." Green
-}
-catch {
-    Write-ColoredLine ("[FAILED] Download failed: " + $_.Exception.Message) Red
-    exit 1
-}
-
-# Extract ZIP
-try {
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
-    [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $extractFolder)
-    Write-ColoredLine "[SUCCESS] Extraction completed." Green
-    Remove-Item $zipPath -Force
-}
-catch {
-    Write-ColoredLine ("[FAILED] Extraction failed: " + $_.Exception.Message) Red
-    exit 1
-}
-
-# Find Autoruns.exe (exclude 64-bit or cmd versions)
-$actualExe = Get-ChildItem -Path $extractFolder -Filter "Autoruns.exe" -Recurse | Where-Object {
-    $_.FullName -notmatch "64|cmd"
-} | Select-Object -First 1
-
-if (-not $actualExe) {
-    Write-ColoredLine "[FAILED] Autoruns.exe not found after extraction." Red
-    exit 1
-}
-
-Write-ColoredLine ("[SUCCESS] Autoruns.exe found at: " + $actualExe.FullName) Green
-
-# Kill any running Autoruns.exe instances to avoid conflicts
-$runningAutoruns = Get-Process -Name "autoruns" -ErrorAction SilentlyContinue
-if ($runningAutoruns) {
-    Write-ColoredLine "[INFO] Found running Autoruns.exe processes, terminating..." Yellow
-    $runningAutoruns | Stop-Process -Force
-    Start-Sleep -Seconds 2
-    Write-ColoredLine "[SUCCESS] All Autoruns.exe processes terminated." Green
-}
-
-# Launch Autoruns.exe
-try {
-    $process = Start-Process -FilePath $actualExe.FullName -PassThru
-    Write-ColoredLine "[SUCCESS] Autoruns launched." Green
-}
-catch {
-    Write-ColoredLine ("[FAILED] Failed to launch Autoruns.exe: " + $_.Exception.Message) Red
-    exit 1
-}
-
-# Wait and maximize window
-Start-Sleep -Seconds 3
-
+# Import WinAPI DLL function once for all steps
 Add-Type @"
 using System;
 using System.Runtime.InteropServices;
@@ -756,8 +686,91 @@ public class WinAPI {
 "@
 
 $SW_MAXIMIZE = 3
-$hwnd = $null
 
+Clear-Host
+
+# ===== STEP 4: AUTORUN CHECK =====
+
+Write-ColoredLine "Step 4: Autorun Check - by @ravenader1" Cyan
+Write-ColoredLine "INSTRUCTION: Wait for the bottom left text to say 'Ready', scroll slowly down, then close the window when finished." Yellow
+Write-Host ""
+
+$baseFolder = "C:\ToolsETA"
+$extractFolder = Join-Path $baseFolder "Autoruns"
+$zipUrl = "https://download.sysinternals.com/files/Autoruns.zip"
+$zipPath = Join-Path $baseFolder "Autoruns.zip"
+
+# Ensure base folder exists and is empty
+if (Test-Path $baseFolder) {
+    Write-ColoredLine "[INFO] Folder $baseFolder exists, clearing all contents..." White
+    Get-ChildItem -Path $baseFolder -Force -Recurse | ForEach-Object {
+        try {
+            $_.Attributes = 'Normal'
+            Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction Stop
+        } catch {
+            Write-ColoredLine "[INFO] Skipped: $($_.FullName): $($_.Exception.Message)" White
+        }
+    }
+    Write-ColoredLine "[SUCCESS] Cleared contents of $baseFolder." Green
+} else {
+    Write-ColoredLine "[INFO] Folder $baseFolder does not exist, creating folder..." White
+    try {
+        New-Item -ItemType Directory -Path $baseFolder -ErrorAction Stop | Out-Null
+        Write-ColoredLine "[SUCCESS] Created folder $baseFolder." Green
+    } catch {
+        Write-ColoredLine ("[FAILED] Could not create folder " + $baseFolder + ": " + $_.Exception.Message) Red
+        exit 1
+    }
+}
+
+try {
+    Write-ColoredLine "[INFO] Downloading Autoruns..." White
+    Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath -UseBasicParsing -ErrorAction Stop
+    Write-ColoredLine "[SUCCESS] Download completed." Green
+} catch {
+    Write-ColoredLine "[FAILED] Download failed: $($_.Exception.Message)" Red
+    exit 1
+}
+
+try {
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $extractFolder)
+    Write-ColoredLine "[SUCCESS] Extraction completed." Green
+    Remove-Item $zipPath -Force
+} catch {
+    Write-ColoredLine "[FAILED] Extraction failed: $($_.Exception.Message)" Red
+    exit 1
+}
+
+$actualExe = Get-ChildItem -Path $extractFolder -Filter "Autoruns.exe" -Recurse | Where-Object {
+    $_.FullName -notmatch "64|cmd"
+} | Select-Object -First 1
+
+if (-not $actualExe) {
+    Write-ColoredLine "[FAILED] Autoruns.exe not found after extraction." Red
+    exit 1
+} else {
+    Write-ColoredLine "[SUCCESS] Autoruns.exe found at: $($actualExe.FullName)" Green
+}
+
+$runningAutoruns = Get-Process -Name "autoruns" -ErrorAction SilentlyContinue
+if ($runningAutoruns) {
+    Write-ColoredLine "[INFO] Found running Autoruns.exe processes, terminating..." Yellow
+    $runningAutoruns | Stop-Process -Force
+    Start-Sleep -Seconds 2
+    Write-ColoredLine "[SUCCESS] All Autoruns.exe processes terminated." Green
+}
+
+try {
+    $process = Start-Process -FilePath $actualExe.FullName -PassThru
+    Write-ColoredLine "[SUCCESS] Autoruns launched." Green
+} catch {
+    Write-ColoredLine "[FAILED] Failed to launch Autoruns.exe: $($_.Exception.Message)" Red
+    exit 1
+}
+
+# Maximize window
+$hwnd = $null
 for ($i = 0; $i -lt 10; $i++) {
     $process.Refresh()
     $hwnd = $process.MainWindowHandle
@@ -768,41 +781,31 @@ for ($i = 0; $i -lt 10; $i++) {
 if ($hwnd -and $hwnd -ne 0) {
     [WinAPI]::ShowWindow($hwnd, $SW_MAXIMIZE) | Out-Null
     Write-ColoredLine "[SUCCESS] Autoruns window maximized." Green
+} else {
+    Write-ColoredLine "[FAILED] Could not maximize Autoruns window." Red
 }
-else {
-    Write-ColoredLine "[FAILED] Could not find window handle to maximize." Red
-}
-
-# --- WAIT FOR AUTORUNS WINDOW TO CLOSE ---
 
 Write-ColoredLine "`nWaiting for Autoruns window to close..." Yellow
-
-while (!$process.HasExited) {
-    Start-Sleep -Seconds 1
-}
-
-# After window closes, show success rate and prompt
+while (!$process.HasExited) { Start-Sleep -Seconds 1 }
 
 Write-ColoredLine "[SUCCESS] Success Rate: 100% (1 / 1)" Green
-
-Wait-ForEnter -PromptMessage "Press Enter to exit."
+Wait-ForEnter -PromptMessage "Press Enter to continue."
 
 Clear-Host
 
 # ===== STEP 5: WINOBJ CHECK =====
 
-Clear-Host
 Write-ColoredLine "Step 5: WinObj Check - by @ravenader1" Cyan
 Write-ColoredLine "INSTRUCTION: Navigate to Sessions > 0 > Dos Devices > Click on every folder, then close the window." Yellow
 Write-Host ""
 
 Show-LoadingBar
 
-$baseFolder = "C:\ToolsETA"
 $extractFolder = Join-Path $baseFolder "WinObj"
 $zipUrl = "https://download.sysinternals.com/files/WinObj.zip"
 $zipPath = Join-Path $baseFolder "WinObj.zip"
 
+# Kill running WinObj if any
 $runningWinObj = Get-Process -Name "winobj" -ErrorAction SilentlyContinue
 if ($runningWinObj) {
     Write-ColoredLine "[INFO] Found running WinObj.exe process(es), terminating..." Yellow
@@ -813,7 +816,7 @@ if ($runningWinObj) {
 Clean-Folder -Path $baseFolder
 
 Write-ColoredLine "[INFO] Downloading WinObj..." White
-Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath -UseBasicParsing
+Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath -UseBasicParsing -ErrorAction Stop
 
 Write-ColoredLine "[INFO] Extracting WinObj..." White
 Add-Type -AssemblyName System.IO.Compression.FileSystem
@@ -825,36 +828,35 @@ $actualExe = Get-ChildItem -Path $extractFolder -Filter "WinObj.exe" -Recurse | 
 } | Select-Object -First 1
 
 if ($actualExe) {
-    $process = Start-Process -FilePath $actualExe.FullName -PassThru
-    if (Maximize-Window -Process $process) {
-        Write-ColoredLine "[SUCCESS] WinObj launched and maximized." Green
-    } else {
-        Write-ColoredLine "[FAILED] Could not maximize WinObj window." Red
+    try {
+        $process = Start-Process -FilePath $actualExe.FullName -PassThru
+        # Maximize window
+        $hwnd = $null
+        for ($i = 0; $i -lt 10; $i++) {
+            $process.Refresh()
+            $hwnd = $process.MainWindowHandle
+            if ($hwnd -ne 0) { break }
+            Start-Sleep -Milliseconds 500
+        }
+        if ($hwnd -and $hwnd -ne 0) {
+            [WinAPI]::ShowWindow($hwnd, $SW_MAXIMIZE) | Out-Null
+            Write-ColoredLine "[SUCCESS] WinObj launched and maximized." Green
+        } else {
+            Write-ColoredLine "[FAILED] Could not maximize WinObj window." Red
+        }
+        $process.WaitForExit()
+        Write-ColoredLine "[SUCCESS] Success Rate: 100% (1 / 1)" Green
+    } catch {
+        Write-ColoredLine ("[FAILED] Failed to launch WinObj.exe: " + $_.Exception.Message) Red
+        Write-ColoredLine "[SUCCESS] Success Rate: 0% (0 / 1)" Red
     }
-    $process.WaitForExit()
-    Write-ColoredLine "[SUCCESS] Success Rate: 100% (1 / 1)" Green
 } else {
     Write-ColoredLine "[FAILED] WinObj.exe not found." Red
     Write-ColoredLine "[SUCCESS] Success Rate: 0% (0 / 1)" Red
 }
 
-Wait-ForEnter
+Wait-ForEnter -PromptMessage "Press Enter to continue."
 Clear-Host
-
-function Wait-ForEnter {
-    param (
-        [string]$PromptMessage = "Press Enter to continue..."
-    )
-    Start-Sleep -Seconds 1
-    Write-ColoredLine $PromptMessage Yellow
-    while ($true) {
-        if ([System.Console]::KeyAvailable) {
-            $key = [System.Console]::ReadKey($true)
-            if ($key.Key -eq "Enter") { break }
-        }
-        Start-Sleep -Milliseconds 100
-    }
-}
 
 # ===== STEP 6: PROCESS EXPLORER =====
 
@@ -923,19 +925,32 @@ try {
 
 $actualExe = Get-ChildItem -Path $extractFolder -Filter "procexp64.exe" -Recurse | Select-Object -First 1
 if ($actualExe) {
-    $process = Start-Process -FilePath $actualExe.FullName -PassThru
-    if (Maximize-Window -Process $process) {
-        Write-ColoredLine "[SUCCESS] Process Explorer launched and maximized." Green
-    } else {
-        Write-ColoredLine "[FAILED] Could not maximize Process Explorer window." Red
+    try {
+        $process = Start-Process -FilePath $actualExe.FullName -PassThru
+        # Maximize window
+        $hwnd = $null
+        for ($i = 0; $i -lt 10; $i++) {
+            $process.Refresh()
+            $hwnd = $process.MainWindowHandle
+            if ($hwnd -ne 0) { break }
+            Start-Sleep -Milliseconds 500
+        }
+        if ($hwnd -and $hwnd -ne 0) {
+            [WinAPI]::ShowWindow($hwnd, $SW_MAXIMIZE) | Out-Null
+            Write-ColoredLine "[SUCCESS] Process Explorer launched and maximized." Green
+        } else {
+            Write-ColoredLine "[FAILED] Could not maximize Process Explorer window." Red
+        }
+        $process.WaitForExit()
+        Write-ColoredLine "[SUCCESS] Success Rate: 100% (1 / 1)" Green
+    } catch {
+        Write-ColoredLine ("[FAILED] Failed to launch Process Explorer: " + $_.Exception.Message) Red
+        Write-ColoredLine "[SUCCESS] Success Rate: 0% (0 / 1)" Red
     }
-    $process.WaitForExit()
-    Write-ColoredLine "[SUCCESS] Success Rate: 100% (1 / 1)" Green
 } else {
     Write-ColoredLine "[FAILED] procexp64.exe not found." Red
     Write-ColoredLine "[SUCCESS] Success Rate: 0% (0 / 1)" Red
 }
 
-# Here you customize the prompt message
 Wait-ForEnter -PromptMessage "Press Enter to exit."
 exit
