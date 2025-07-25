@@ -799,7 +799,8 @@ Write-ColoredLine "Step 5: WinObj Check - by @ravenader1" Cyan
 Write-ColoredLine "INSTRUCTION: Navigate to Sessions > 0 > Dos Devices > Click on every folder, then close the window." Yellow
 Write-Host ""
 
-Show-LoadingBar
+# Optional: comment out Show-LoadingBar if it outputs unwanted info
+# Show-LoadingBar
 
 $extractFolder = Join-Path $baseFolder "WinObj"
 $zipUrl = "https://download.sysinternals.com/files/WinObj.zip"
@@ -808,20 +809,55 @@ $zipPath = Join-Path $baseFolder "WinObj.zip"
 # Kill running WinObj if any
 $runningWinObj = Get-Process -Name "winobj" -ErrorAction SilentlyContinue
 if ($runningWinObj) {
-    Write-ColoredLine "[INFO] Found running WinObj.exe process(es), terminating..." Yellow
+    Write-ColoredLine "[SUCCESS] Terminated running WinObj.exe processes." Green
     $runningWinObj | Stop-Process -Force
-    Write-ColoredLine "[SUCCESS] WinObj.exe processes terminated." Green
 }
 
-Clean-Folder -Path $baseFolder
+# Silent folder cleaning instead of Clean-Folder function
+if (Test-Path $baseFolder) {
+    try {
+        Remove-Item -Path "${baseFolder}\*" -Recurse -Force -ErrorAction Stop
+        Write-ColoredLine "[SUCCESS] Cleared contents of ${baseFolder}." Green
+    } catch {
+        Write-ColoredLine "[FAILED] Could not clear ${baseFolder}: $_" Red
+        Wait-ForEnter -PromptMessage "Press Enter to exit."
+        Clear-Host
+        return
+    }
+} else {
+    # Create folder if it doesn't exist
+    try {
+        New-Item -ItemType Directory -Path "${baseFolder}" -Force | Out-Null
+        Write-ColoredLine "[SUCCESS] Created folder ${baseFolder}." Green
+    } catch {
+        Write-ColoredLine "[FAILED] Could not create folder ${baseFolder}: $_" Red
+        Wait-ForEnter -PromptMessage "Press Enter to exit."
+        Clear-Host
+        return
+    }
+}
 
-Write-ColoredLine "[INFO] Downloading WinObj..." White
-Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath -UseBasicParsing -ErrorAction Stop
+try {
+    Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath -UseBasicParsing -ErrorAction Stop
+    Write-ColoredLine "[SUCCESS] Downloaded WinObj." Green
+} catch {
+    Write-ColoredLine "[FAILED] Downloading WinObj failed: $_" Red
+    Wait-ForEnter -PromptMessage "Press Enter to exit."
+    Clear-Host
+    return
+}
 
-Write-ColoredLine "[INFO] Extracting WinObj..." White
-Add-Type -AssemblyName System.IO.Compression.FileSystem
-[System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $extractFolder)
-Remove-Item $zipPath -Force
+try {
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $extractFolder)
+    Remove-Item $zipPath -Force
+    Write-ColoredLine "[SUCCESS] Extracted WinObj." Green
+} catch {
+    Write-ColoredLine "[FAILED] Extracting WinObj failed: $_" Red
+    Wait-ForEnter -PromptMessage "Press Enter to exit."
+    Clear-Host
+    return
+}
 
 $actualExe = Get-ChildItem -Path $extractFolder -Filter "WinObj.exe" -Recurse | Where-Object {
     $_.FullName -notmatch "64|cmd"
@@ -830,7 +866,6 @@ $actualExe = Get-ChildItem -Path $extractFolder -Filter "WinObj.exe" -Recurse | 
 if ($actualExe) {
     try {
         $process = Start-Process -FilePath $actualExe.FullName -PassThru
-        # Maximize window
         $hwnd = $null
         for ($i = 0; $i -lt 10; $i++) {
             $process.Refresh()
@@ -845,6 +880,7 @@ if ($actualExe) {
             Write-ColoredLine "[FAILED] Could not maximize WinObj window." Red
         }
         $process.WaitForExit()
+        Write-ColoredLine ""
         Write-ColoredLine "[SUCCESS] Success Rate: 100% (1 / 1)" Green
     } catch {
         Write-ColoredLine ("[FAILED] Failed to launch WinObj.exe: " + $_.Exception.Message) Red
