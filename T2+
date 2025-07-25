@@ -688,7 +688,7 @@ Clear-Host
 
 # ===== STEP 4: AUTORUN CHECK =====
 
-Write-ColoredLine "Step 4: Autorun Check - by @ravenader1" Cyan
+Write-ColoredLine "Step 4: Autorun Check" Cyan
 Write-ColoredLine "INSTRUCTION: Wait for the bottom left text to say 'Ready', scroll slowly down, then close the window when finished." Yellow
 Write-Host ""
 
