@@ -3,7 +3,7 @@ $IsAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIde
 
 if (-not $IsAdmin) {
     Write-Host "`n[WARNING] This script is NOT running with Administrator privileges." -ForegroundColor Red
-    Write-Host "[ACTION] Please right-click and 'Run with PowerShell' as Administrator." -ForegroundColor Yellow
+    Write-Host "[ACTION] Please right-click PowerShell and then select 'Run as Administrator.'" -ForegroundColor Yellow
     Write-Host ""
     Pause
     exit 1
