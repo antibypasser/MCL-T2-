@@ -70,16 +70,16 @@ Clear-Host
 
 # ====== STEP 1: SYSTEM CHECK ====== 
 
-Write-ColoredLine "Step 1 of 6: SYSTEM Check" Cyan
+Write-ColoredLine "Step 1 of 6: SYSTEM Check" White
 Write-ColoredLine "INSTRUCTION: Reach 100% success" Yellow
-Write-Host "" # Blank line above progress bar
+Write-Host ""
 for ($i = 0; $i -le 10; $i++) {
 $percent = $i * 10
 $bar = "#" * $i + "-" * (10 - $i)
 $line = "Progress: [ $bar ] $percent%"
 Write-Host -NoNewline "`r"
 $oldColor = $Host.UI.RawUI.ForegroundColor
-$Host.UI.RawUI.ForegroundColor = 'Blue'
+$Host.UI.RawUI.ForegroundColor = 'White'
 Write-Host $line -NoNewline
 $Host.UI.RawUI.ForegroundColor = $oldColor
 Start-Sleep -Milliseconds 200
@@ -292,7 +292,7 @@ function Write-ColoredLine {
 
 # ====== STEP 2: PREFETCH CHECK ====== 
 
-Write-ColoredLine "Step 2 of 6: PREFETCH Check" Cyan
+Write-ColoredLine "Step 2 of 6: PREFETCH Check" White
 Write-ColoredLine "INSTRUCTION: Slowly scroll to the very bottom, then close the window" Yellow
 
 function Show-LoadingBar {
@@ -303,7 +303,7 @@ function Show-LoadingBar {
         $line = "Progress: [ $bar ] $percent%"
         Write-Host -NoNewline "`r"
         $oldColor = $Host.UI.RawUI.ForegroundColor
-        $Host.UI.RawUI.ForegroundColor = 'Blue'
+        $Host.UI.RawUI.ForegroundColor = 'White'
         Write-Host $line -NoNewline
         $Host.UI.RawUI.ForegroundColor = $oldColor
         Start-Sleep -Milliseconds 200
@@ -464,17 +464,17 @@ function Show-ProgressBar {
     foreach ($i in 0..9) {
         $percent = $i * 10
         $bar = ("#" * $i).PadRight(10, "-")
-        Write-Host "`rProgress: [ $bar ] $percent% " -ForegroundColor Blue -NoNewline
+        Write-Host "`rProgress: [ $bar ] $percent% " -ForegroundColor White -NoNewline
         Start-Sleep -Milliseconds 200
     }
 
     $bar = ("#" * 9).PadRight(10, "-")
-    Write-Host "`rProgress: [ $bar ] 99% " -ForegroundColor Blue -NoNewline
+    Write-Host "`rProgress: [ $bar ] 99% " -ForegroundColor White -NoNewline
 }
 
 Clear-Host
 
-Write-ColoredLine "Step 3 of 6: BAM Entries" Cyan
+Write-ColoredLine "Step 3 of 6: BAM Entries" White
 Write-ColoredLine "INSTRUCTION: Slowly scroll to the very bottom, then close the window" Yellow 
 Write-Host ""
 
@@ -573,7 +573,7 @@ $Bam = foreach ($Sid in $Users) {
     }
 }
 
-Write-Host "`rProgress: [ ########## ] 100% " -ForegroundColor Blue
+Write-Host "`rProgress: [ ########## ] 100% " -ForegroundColor White
 
 Start-Job {
     Start-Sleep -Milliseconds 400
@@ -678,7 +678,7 @@ function Show-LoadingBar {
     for ($i = 0; $i -le 10; $i++) {
         $percent = $i * 10
         $bar = "#" * $i + "-" * (10 - $i)
-        Write-Host -NoNewline "`rProgress: [ $bar ] $percent% " -ForegroundColor Blue
+        Write-Host -NoNewline "`rProgress: [ $bar ] $percent% " -ForegroundColor White
         Start-Sleep -Milliseconds 200
     }
     Write-Host "`n"
@@ -699,7 +699,7 @@ Clear-Host
 
 # ===== STEP 4: AUTORUN CHECK =====
 
-Write-ColoredLine "Step 4 of 6: Autorun Check" Cyan
+Write-ColoredLine "Step 4 of 6: Autorun Check" White
 Write-ColoredLine "INSTRUCTION: Wait for the bottom left text to say 'Ready', scroll slowly down, then close the window when finished." Yellow
 Write-Host ""
 
@@ -709,7 +709,7 @@ for ($i = 0; $i -le 10; $i++) {
     $line = "Progress: [ $bar ] $percent%"
     Write-Host -NoNewline "`r"
     $oldColor = $Host.UI.RawUI.ForegroundColor
-    $Host.UI.RawUI.ForegroundColor = 'Blue'
+    $Host.UI.RawUI.ForegroundColor = 'White'
     Write-Host $line -NoNewline
     $Host.UI.RawUI.ForegroundColor = $oldColor
     Start-Sleep -Milliseconds 200
@@ -808,19 +808,17 @@ Clear-Host
 
 # ===== STEP 5: WINOBJ CHECK =====
 
-Write-ColoredLine "Step 5 of 6: WinObj Check" Cyan
+Write-ColoredLine "Step 5 of 6: WinObj Check" White
 Write-ColoredLine "INSTRUCTION: Navigate to Sessions > 0 > Dos Devices > Click on every folder, then close the window." Yellow
 Write-Host ""
 
-# Loading Bar
-Write-Host "" # Blank line above progress bar
 for ($i = 0; $i -le 10; $i++) {
     $percent = $i * 10
     $bar = "#" * $i + "-" * (10 - $i)
     $line = "Progress: [ $bar ] $percent%"
     Write-Host -NoNewline "`r"
     $oldColor = $Host.UI.RawUI.ForegroundColor
-    $Host.UI.RawUI.ForegroundColor = 'Blue'
+    $Host.UI.RawUI.ForegroundColor = 'White'
     Write-Host $line -NoNewline
     $Host.UI.RawUI.ForegroundColor = $oldColor
     Start-Sleep -Milliseconds 200
@@ -838,7 +836,6 @@ if ($runningWinObj) {
     $runningWinObj | Stop-Process -Force
 }
 
-# Silent folder cleaning instead of Clean-Folder function
 if (Test-Path $baseFolder) {
     try {
         Remove-Item -Path "${baseFolder}\*" -Recurse -Force -ErrorAction Stop
@@ -850,7 +847,6 @@ if (Test-Path $baseFolder) {
         return
     }
 } else {
-    # Create folder if it doesn't exist
     try {
         New-Item -ItemType Directory -Path "${baseFolder}" -Force | Out-Null
         Write-ColoredLine "[SUCCESS] Created folder ${baseFolder}." Green
@@ -948,7 +944,7 @@ function Show-LoadingBar {
     for ($i = 0; $i -le 10; $i++) {
         $percent = $i * 10
         $bar = "#" * $i + "-" * (10 - $i)
-        Write-Host -NoNewline "`rProgress: [ $bar ] $percent% " -ForegroundColor Blue
+        Write-Host -NoNewline "`rProgress: [ $bar ] $percent% " -ForegroundColor White
         Start-Sleep -Milliseconds 200
     }
     Write-Host ""
@@ -956,7 +952,7 @@ function Show-LoadingBar {
 }
 
 Clear-Host
-Write-ColoredLine "Step 6 of 6: Process Explorer" Cyan
+Write-ColoredLine "Step 6 of 6: Process Explorer" White
 Write-ColoredLine "INSTRUCTION: Wait for Process Explorer to open. Scroll to the bottom, then close the window." Yellow
 Write-Host ""
 Show-LoadingBar
