@@ -49,17 +49,37 @@ $cpu = Get-WmiObject Win32_Processor | Select-Object -First 1
 
 if ($cpu.NumberOfCores -ge 4 -and $cpu.MaxClockSpeed -ge 2500) {
     Write-Host "Detected CPU: $($cpu.Name)" -ForegroundColor Green
-    Write-Host "Your CPU looks good. Everything should load quickly." -ForegroundColor Green
+    Write-Host "Your CPU looks good." -ForegroundColor Green 
 } else {
     Write-Host "Detected CPU: $($cpu.Name)" -ForegroundColor Red
-    Write-Host "Your CPU isn't that strong. This process may take longer for you." -ForegroundColor Yellow
+    Write-Host "Your CPU may be a bit weak. This process may take longer for you." -ForegroundColor Yellow
+}
+
+Write-Host ""
+ 
+$gpu = Get-WmiObject Win32_VideoController | Select-Object -First 1
+$gpuName = $gpu.Name
+
+# Define "good" GPU keywords (can expand as needed)
+$goodGPUs = @("RTX 30", "RTX 40", "RX 6000", "RX 7000")
+
+$gpuIsGood = $false
+foreach ($keyword in $goodGPUs) {
+    if ($gpuName -like "*$keyword*") { $gpuIsGood = $true; break }
+}
+
+if ($gpuIsGood) {
+    Write-Host "Detected GPU: $gpuName" -ForegroundColor Green
+    Write-Host "Your GPU looks good." -ForegroundColor Green 
+} else {
+    Write-Host "Detected GPU: $gpuName" -ForegroundColor Red
+    Write-Host "Your GPU may be a bit weak. Some processes may be slower." -ForegroundColor Yellow
 }
 Write-ColoredLine ""
 Write-ColoredLine "=== Discord Servers ===" Yellow
 Write-ColoredLine "discord.gg/mcl" White
 Write-ColoredLine "discord.gg/rivalsleague" White
 Write-ColoredLine "discord.gg/eta" White
-Write-ColoredLine "discord.gg/etajd" White
 Write-ColoredLine ""
 Write-ColoredLine "=== Credits ===" Yellow
 Write-ColoredLine "Made by @ravenader1" White
