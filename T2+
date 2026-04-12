@@ -57,23 +57,42 @@ if ($cpu.NumberOfCores -ge 4 -and $cpu.MaxClockSpeed -ge 2500) {
 
 Write-Host ""
  
-$gpu = Get-WmiObject Win32_VideoController | Select-Object -First 1
-$gpuName = $gpu.Name
+$gpuList = Get-WmiObject Win32_VideoController
+$gpuNames = $gpuList | Select-Object -ExpandProperty Name
 
-$goodGPUs = @("RTX 30", "RTX 40", "RX 6000", "RX 7000")
+$activeGPU = $gpuList | Where-Object { $_.Name -match "NVIDIA|RTX" } | Select-Object -First 1
+
+if (-not $activeGPU) {
+    $activeGPU = $gpuList | Sort-Object AdapterRAM -Descending | Select-Object -First 1
+}
+
+$activeGPUName = $activeGPU.Name
+
+Write-Host "Detected GPUs:" -ForegroundColor White
+$gpuNames | ForEach-Object { Write-Host " - $_" -ForegroundColor White }
+
+Write-Host ""
+Write-Host "Active GPU: $activeGPUName" -ForegroundColor Cyan
+
+$goodGPUs = @("RTX 30", "RTX 40", "RTX 50", "RX 6000", "RX 7000")
 
 $gpuIsGood = $false
 foreach ($keyword in $goodGPUs) {
-    if ($gpuName -like "*$keyword*") { $gpuIsGood = $true; break }
+    if ($activeGPUName -like "*$keyword*") {
+        $gpuIsGood = $true
+        break
+    }
 }
 
 if ($gpuIsGood) {
-    Write-Host "Detected GPU: $gpuName" -ForegroundColor Green
-    Write-Host "Your GPU looks good." -ForegroundColor Green 
+    Write-Host "Your GPU looks good." -ForegroundColor Green
 } else {
-    Write-Host "Detected GPU: $gpuName" -ForegroundColor Red
     Write-Host "Your GPU may be a bit weak. Some processes may be slower." -ForegroundColor Yellow
 }
+
+# IMPORTANT: keep rest of script using active GPU
+$gpuName = $activeGPUName
+
 Write-ColoredLine ""
 Write-ColoredLine "=== Discord Servers ===" Yellow
 Write-ColoredLine "discord.gg/mcl" White
