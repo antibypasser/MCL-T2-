@@ -43,7 +43,7 @@ Write-ColoredLine "Complete all steps with 100% success to pass." White
 Write-ColoredLine "Applications will download and extract to C:\ToolsETA." White
 Write-ColoredLine "If a prompt shows up, press OK to run the application." White
 Write-ColoredLine "Follow the instructions listed on each step." White
-Write-ColoredLine "This T2 PowerShell process currently has 6 steps." White
+Write-ColoredLine "This T1+ PowerShell process currently has 6 steps." White
 Write-Host ""
 $cpu = Get-WmiObject Win32_Processor | Select-Object -First 1
 
